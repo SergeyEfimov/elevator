@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 
 public class InterruptDelay implements Delay{
 
@@ -35,10 +36,12 @@ public class InterruptDelay implements Delay{
         });
     }
 
+    @Nonnull
     public static InterruptDelay getInterruptDelay(long timeoutInMs) {
         return new InterruptDelay(timeoutInMs);
     }
 
+    @Nonnull
     public static InterruptDelay getInfinitiveInterruptDelay() {
         return new InterruptDelay();
     }

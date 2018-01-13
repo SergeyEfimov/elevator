@@ -29,37 +29,37 @@ public enum ElevatorState {
     static {
         // initialize nextSupplier here to avoid illegal forward reference
         CLOSE.nextSupplier = (elevator) -> {
-            boolean hasPressedButtonOnCurrentLevel = elevator.internalFloorsButtons.contains(elevator.currentLevel)
-                    || elevator.externalFloorsButtons.contains(elevator.currentLevel);
-
-            if (hasPressedButtonOnCurrentLevel) {
+            // in this state we have to keep direction if exists pushed buttons on current direction,
+            // otherwise state should be changed to IDLE, and of course we should open the door if current level
+            // buttons has been pressed
+            if (elevator.internalFloorsButtons.contains(elevator.currentLevel)
+                || elevator.externalFloorsButtons.contains(elevator.currentLevel)) {
                 return OPENING;
             }
 
-            if (elevator.direction == UP) {
-                boolean hasPressedButtonUpper = (elevator.internalFloorsButtons.higher(elevator.currentLevel) != null)
-                        || (elevator.externalFloorsButtons.higher(elevator.currentLevel) != null);
-                if (hasPressedButtonUpper) {
-                    return MOVING_UP;
-                }
+            if ((elevator.direction == UP) &&
+                    (elevator.internalFloorsButtons.higher(elevator.currentLevel) != null
+                    || elevator.externalFloorsButtons.higher(elevator.currentLevel) != null)) {
+                return MOVING_UP;
             }
 
-            if (elevator.direction == DOWN) {
-                boolean hasPressedButtonsBelow = (elevator.internalFloorsButtons.floor(elevator.currentLevel) != null)
-                        || (elevator.externalFloorsButtons.floor(elevator.currentLevel) != null);
-                if (hasPressedButtonsBelow) {
-                    return MOVING_DOWN;
-                }
+            if (elevator.direction == DOWN &&
+                    (elevator.internalFloorsButtons.floor(elevator.currentLevel) != null
+                    || elevator.externalFloorsButtons.floor(elevator.currentLevel) != null)) {
+                return MOVING_DOWN;
             }
-
             elevator.direction = null;
             return IDLE;
         };
 
         IDLE.nextSupplier = (elevator) -> {
+            // in this state we should decide in which direction elevator should move
+            // in case is current level buttons has been pressed, we should immediately open the door,
+            // otherwise we should move towards to pressed buttons (with priority of internal buttons)
             NavigableSet<Integer> internalButtons = elevator.internalFloorsButtons;
             NavigableSet<Integer> externalButtons = elevator.externalFloorsButtons;
 
+            // initialize delay timer here to avoid concurrent race collision
             elevator.idleInterruptDelay = getInfinitiveInterruptDelay();
             // we shouldn't wait buttons if someone was pressed
             if (internalButtons.isEmpty() && externalButtons.isEmpty()) {
@@ -83,10 +83,14 @@ public enum ElevatorState {
         };
 
         CLOSING.nextSupplier = (elevator) -> {
+            // this state is closing the door, can be interrupted by emergency open button
+            // in case when state was interrupted we should return opening state, otherwise close
             boolean wasInterrupted;
             long closingStart = System.currentTimeMillis();
             elevator.closingInterruptDelay = getInterruptDelay(elevator.doorMoveTimeInMs);
             wasInterrupted = elevator.openButtonPressed || elevator.closingInterruptDelay.waitForDelay();
+            // for situation when door wasn't closing completely, we have to save spent time value
+            // to set it as delay value for opening state
             elevator.closingTimeSpent =
                     min(System.currentTimeMillis() - closingStart, elevator.doorMoveTimeInMs);
             return wasInterrupted ? OPENING : CLOSE;
@@ -108,6 +112,8 @@ public enum ElevatorState {
         };
 
         MOVING_UP.nextSupplier = (elevator) -> {
+            // when elevator moving up, it should be stopped only if current level is equals to highest required level,
+            // otherwise it should keep going
             elevator.direction = UP;
             new UninterruptedDelay(elevator.levelPassingTimeInMs).waitForDelay();
 
@@ -124,6 +130,7 @@ public enum ElevatorState {
         };
 
         MOVING_DOWN.nextSupplier = (elevator) -> {
+            // when elevator moving down, it should stop on every required level
             elevator.direction = DOWN;
             new UninterruptedDelay(elevator.levelPassingTimeInMs).waitForDelay();
 
@@ -152,7 +159,7 @@ public enum ElevatorState {
     }
 
     @Nonnull
-    public ElevatorState next(@Nonnull Elevator elevator) {
+    ElevatorState next(@Nonnull Elevator elevator) {
         return nextSupplier.apply(elevator);
     }
 }

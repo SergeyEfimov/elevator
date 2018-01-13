@@ -26,7 +26,7 @@ public class App {
         cmdOptions.addOption(Option.builder().argName("doorMoveTime=value").longOpt("doorMoveTime").numberOfArgs(2)
                 .valueSeparator().desc("The time (in seconds) of the doors opening or closing")
                 .required().build());
-        cmdOptions.addOption(Option.builder().argName("openDoorDelayTime=value").longOpt("openOpenDelayTime")
+        cmdOptions.addOption(Option.builder().argName("openDoorDelayTime=value").longOpt("openDoorDelayTime")
                 .numberOfArgs(2).valueSeparator()
                 .desc("The delay (in seconds) between when the door was open and will be closed").required().build());
 
@@ -41,17 +41,69 @@ public class App {
             return;
         }
 
-        int levelsNumber = Integer.valueOf(cmd.getOptionValue("levels"));
-        float levelHeight = Float.valueOf(cmd.getOptionValue("height"));
-        float speed = Float.valueOf(cmd.getOptionValue("speed"));
-        long doorMoveTime = Long.valueOf(cmd.getOptionValue("doorMoveTime"));
-        long openDoorDelayTime = Long.valueOf(cmd.getOptionValue("openOpenDelayTime"));
+        int levelsNumber;
+        float levelHeight;
+        float speed;
+        long doorMoveTime;
+        long openDoorDelayTime;
+        try {
+            levelsNumber = Integer.valueOf(cmd.getOptionValue("levels"));
+        } catch (NumberFormatException e) {
+            System.out.println("--levels should be a number");
+            return;
+        }
+        try {
+            levelHeight = Float.valueOf(cmd.getOptionValue("height"));
+        } catch (NumberFormatException e) {
+            System.out.println("--height should be a number");
+            return;
+        }
+        try {
+            speed = Float.valueOf(cmd.getOptionValue("speed"));
+        } catch (NumberFormatException e) {
+            System.out.println("--speed should be a number");
+            return;
+        }
+        try {
+            doorMoveTime = Long.valueOf(cmd.getOptionValue("doorMoveTime"));
+        } catch (NumberFormatException e) {
+            System.out.println("--doorMoveTime should be a number");
+            return;
+        }
+        try {
+            openDoorDelayTime = Long.valueOf(cmd.getOptionValue("openDoorDelayTime"));
+        } catch (NumberFormatException e) {
+            System.out.println("--openDoorDelayTime should be a number");
+            return;
+        }
+
+        // check params
+        if (levelsNumber > 20 || levelsNumber < 5) {
+            System.out.println("--levels value should be between 5 and 20 (including)");
+            return;
+        }
+        if (levelHeight <= 0) {
+            System.out.println("--height value should be more than zero");
+            return;
+        }
+        if (speed <= 0) {
+            System.out.println("--speed value should be more than zero");
+            return;
+        }
+        if (doorMoveTime <= 0) {
+            System.out.println("--doorMoveTime value should be more than zero");
+            return;
+        }
+        if (openDoorDelayTime <= 0) {
+            System.out.println("--doorMoveTime value should be more than zero");
+            return;
+        }
 
         ElevatorDashboard dashboard = new ElevatorDashboard(levelsNumber);
 
         Elevator elevator =
-                new Elevator(levelsNumber, levelHeight, speed, doorMoveTime, openDoorDelayTime,
-                        dashboard::unselectLevelButtons, dashboard::unselectOpenButton, dashboard::setStatusText);
+                new Elevator(levelsNumber, levelHeight, speed, doorMoveTime * 1000, openDoorDelayTime * 1000,
+                        dashboard::deselectLevelButtons, dashboard::setStatusText, dashboard::deselectOpenButton);
 
         dashboard.start(e -> elevator.addInternalCommand(e.getActionCommand()),
                 e -> elevator.addExternalCommand(e.getActionCommand()));

@@ -37,7 +37,55 @@ public class ElevatorDashboard extends JFrame {
         this.levelNumber = levelNumber;
     }
 
-    private void addComponentToPane(Container pane) {
+    /**
+     * Launch the form
+     * 
+     * @param internalButtonsListener
+     *            - listener for internal buttons
+     * @param externalButtonsListener
+     *            - listener for external buttons
+     */
+    public void start(@Nonnull ActionListener internalButtonsListener,
+            @Nonnull ActionListener externalButtonsListener) {
+        this.internalButtonsListener = internalButtonsListener;
+        this.externalButtonsListener = externalButtonsListener;
+
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        addComponentToPane(getContentPane());
+        pack();
+        setVisible(true);
+        setResizable(false);
+    }
+
+    /**
+     * Deselect buttons of required level
+     * 
+     * @param levelNumber
+     *            - required level
+     */
+    public void deselectLevelButtons(int levelNumber) {
+        internalLevelButtons[levelNumber - 1].setSelected(false);
+        externalLevelButtons[levelNumber - 1].setSelected(false);
+    }
+
+    /**
+     * Deselect emergency open button
+     */
+    public void deselectOpenButton() {
+        openButton.setSelected(false);
+    }
+
+    /**
+     * Set text of current elevator state
+     * 
+     * @param text
+     *            - new text
+     */
+    public void setStatusText(@Nonnull String text) {
+        statusField.setText(text);
+    }
+
+    private void addComponentToPane(@Nonnull Container pane) {
         JPanel internalButtonsPanel = new JPanel(new GridLayout(11, 2));
 
         internalLevelButtons = generateLevelButtons(levelNumber, internalButtonsListener);
@@ -50,10 +98,9 @@ public class ElevatorDashboard extends JFrame {
 
         externalLevelButtons = generateLevelButtons(levelNumber, externalButtonsListener);
         Stream.of(externalLevelButtons).forEach(externalButtonsPanel::add);
-        JToggleButton hidenButton = generateButton("open", (e) -> {
-        });
-        hidenButton.setVisible(false);
-        externalButtonsPanel.add(hidenButton);
+        JToggleButton hiddenButton = generateButton("open", (e) -> {});
+        hiddenButton.setVisible(false);
+        externalButtonsPanel.add(hiddenButton);
 
         JPanel statusPanel = new JPanel();
         statusField = new JLabel("Status");
@@ -106,30 +153,5 @@ public class ElevatorDashboard extends JFrame {
             button.setActionCommand(actionCommand);
         }
         return button;
-    }
-
-    public void start(@Nonnull ActionListener internalButtonsListener,
-            @Nonnull ActionListener externalButtonsListener) {
-        this.internalButtonsListener = internalButtonsListener;
-        this.externalButtonsListener = externalButtonsListener;
-
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        addComponentToPane(getContentPane());
-        pack();
-        setVisible(true);
-        setResizable(false);
-    }
-
-    public void unselectLevelButtons(int levelNumber) {
-        internalLevelButtons[levelNumber - 1].setSelected(false);
-        externalLevelButtons[levelNumber - 1].setSelected(false);
-    }
-
-    public void unselectOpenButton() {
-        openButton.setSelected(false);
-    }
-
-    public void setStatusText(@Nonnull String text) {
-        statusField.setText(text);
     }
 }

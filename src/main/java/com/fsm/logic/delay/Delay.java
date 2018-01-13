@@ -9,7 +9,7 @@ public interface Delay {
 
     /**
      * interrupt delay
-     * @return true if dalay was really interrupted, otherwise false
+     * @return true if daley was really interrupted, otherwise false
      */
     @SuppressWarnings("UnusedReturnValue")
     boolean interrupt();

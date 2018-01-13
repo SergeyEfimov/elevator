@@ -9,7 +9,8 @@ import com.fsm.logic.delay.Delay;
 import com.fsm.logic.delay.MockDelay;
 
 /**
- *
+ * The class is a model of simplified elevator (only one service internal button). As source I use elevator from house
+ * where I live. The elevator has one button per floor, and stay by floor button only when it moves down.
  */
 public class Elevator implements Runnable {
 
@@ -29,6 +30,7 @@ public class Elevator implements Runnable {
     // elevator state
     private ElevatorState state;
     int currentLevel;
+
     // buttons state
     final NavigableSet<Integer> internalFloorsButtons = new ConcurrentSkipListSet<>();
     final NavigableSet<Integer> externalFloorsButtons = new ConcurrentSkipListSet<>();
@@ -44,7 +46,7 @@ public class Elevator implements Runnable {
 
     public Elevator(int numberOfLevels, float levelHeightInMeter, float speedInMeterPerSecond, long doorMoveTimeInMs,
             long openDoorDelayTimeInMs, @Nonnull Consumer<Integer> disableLevelButtonCallback,
-            @Nonnull Runnable disableOpenButtonCallback, @Nonnull Consumer<String> printStatusConsumer) {
+            @Nonnull Consumer<String> printStatusConsumer, @Nonnull Runnable disableOpenButtonCallback) {
         this.levelPassingTimeInMs = (long) (levelHeightInMeter * 1000 / speedInMeterPerSecond);
         this.numberOfLevels = numberOfLevels;
         this.doorMoveTimeInMs = doorMoveTimeInMs;
@@ -69,6 +71,14 @@ public class Elevator implements Runnable {
         }
     }
 
+    /**
+     * Set internal button using received command
+     * 
+     * @param command
+     *            - new command
+     * @throws IllegalArgumentException
+     *             - throw when command getting out from required diapason
+     */
     public void addInternalCommand(@Nonnull String command) throws IllegalArgumentException {
         if (command.toLowerCase().equals(OPEN_COMMAND)) {
             if (state == ElevatorState.CLOSING) {
@@ -84,6 +94,14 @@ public class Elevator implements Runnable {
         }
     }
 
+    /**
+     * Set external button using received command
+     *
+     * @param command
+     *            - new command
+     * @throws IllegalArgumentException
+     *             - throw when command getting out from required diapason
+     */
     public void addExternalCommand(@Nonnull String command) throws IllegalArgumentException {
         externalFloorsButtons.add(getFloorNumberFromCommand(command));
         if (state == ElevatorState.IDLE) {
